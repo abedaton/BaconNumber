@@ -22,7 +22,7 @@ public class Database {
                 "deathYear INT, " +
                 "primaryProfession STRING NOT NULL, " +
                 "films STRING NOT NULL);";
-        stmt.execute(createPersonTable);
+        stmt.executeUpdate(createPersonTable);
     }
 
     private Connection connect() throws SQLException{
@@ -50,12 +50,12 @@ public class Database {
 
     public void beginBatch(int batchSize){
         // TODO : Add Batch insert rather than inserting one by one
-        batchSQL = "INSERT INTO People(nconst,primaryName,birthYear,deathYear,primaryProfession,films)" + "VALUES(?,?,?,?,?,?);";
+        batchSQL = "INSERT INTO People(nconst,primaryName,birthYear,deathYear,primaryProfession,films)" + " VALUES(?,?,?,?,?,?);";
         countingBatch = 0;
         pstmtBatch = null;
         this.batchSize = batchSize;
         try {
-            conn.setAutoCommit(false);
+            conn.setAutoCommit(true);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -68,10 +68,24 @@ public class Database {
 
     public void addToBatch(String nconst, String primaryName, int birthYear, int deathYear, String professions, String films) throws SQLException {
         pstmtBatch = prepareUserStatement(nconst, primaryName, birthYear, deathYear, professions, films, batchSQL);
-        if (++countingBatch % batchSize == 0){
+        // TODO remove duplicated code
+        pstmtBatch.setString(1, nconst);
+        pstmtBatch.setString(2, primaryName);
+        pstmtBatch.setInt(3, birthYear);
+        pstmtBatch.setInt(4, deathYear);
+        pstmtBatch.setString(5, professions);
+        pstmtBatch.setString(6, films);
+        pstmtBatch.addBatch();
+        countingBatch++;
+
+    }
+
+    public void doBatch(){
+        try {
             int[] result = pstmtBatch.executeBatch();
-            System.out.println("Added " + result.length + " rows");
-            conn.commit();
+            System.out.println("Inserted " + result.length + " rows");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

@@ -31,6 +31,7 @@ public class NewParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        db.doBatch();
         System.out.println(a);
         System.out.println(b);
         return people;
@@ -38,6 +39,7 @@ public class NewParser {
     }
 
     private void handleLine(String line) {
+
         List<String> parsedLine = Arrays.asList(line.split("\t"));
         List<String> professions = Arrays.asList(parsedLine.get(4).split(","));
         if (professions.contains("actor") || professions.contains("actress")){
@@ -64,6 +66,9 @@ public class NewParser {
                 }
 //                db.addPerson(parsedLine.get(0), parsedLine.get(1), birthYear, deathYear, parsedLine.get(4), parsedLine.get(5));
                 count++;
+                if (count % 1000 == 0) {
+                    System.out.println(count);
+                }
 //                people.add(new Person(parsedLine.get(0), parsedLine.get(1), birthYear, deathYear, Arrays.asList(parsedLine.get(4).split(",")), Arrays.asList(parsedLine.get(5).split(","))));
             }
         }
