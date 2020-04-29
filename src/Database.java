@@ -67,7 +67,7 @@ public class Database {
     }
 
     public void addToBatch(String nconst, String primaryName, int birthYear, int deathYear, String professions, String films) throws SQLException {
-        pstmtBatch = prepareUserStatement(nconst, primaryName, birthYear, deathYear, professions, films, batchSQL);
+//        pstmtBatch = prepareUserStatement(nconst, primaryName, birthYear, deathYear, professions, films, batchSQL);
         // TODO remove duplicated code
         pstmtBatch.setString(1, nconst);
         pstmtBatch.setString(2, primaryName);
