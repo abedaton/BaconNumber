@@ -15,7 +15,7 @@ public class Main {
                 NewParser newParser = new NewParser(db);
                 TestParser testParser = new TestParser(db);
                 System.out.println("Starting parsing");
-                List<Person> people = newParser.parseName_basic(args[0]);
+                List<Person> people = newParser.parseName_basic("datasets/name.basics.tsv");
             } catch (SQLException e) {
                 System.out.println("The database could not be created. The program will now exit.");
                 e.printStackTrace();

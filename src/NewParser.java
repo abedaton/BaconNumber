@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +22,7 @@ public class NewParser {
     }
 
     public List<Person> parseName_basic(String fileName) {
-
+        db.beginBatch(500);
         List<String> list;
         try (Stream<String> stream = Files.lines(Paths.get(fileName)).skip(1)) {
             list = stream.collect(Collectors.toList());
@@ -40,7 +41,6 @@ public class NewParser {
         List<String> parsedLine = Arrays.asList(line.split("\t"));
         List<String> professions = Arrays.asList(parsedLine.get(4).split(","));
         if (professions.contains("actor") || professions.contains("actress")){
-//        if (parsedLine.get(4).contains("actor") || parsedLine.get(5).contains("actress")){
             a++;
             if (!parsedLine.get(5).contains("\\N")){
                 b++;
@@ -56,10 +56,15 @@ public class NewParser {
                 } catch (NumberFormatException notUsed) {
                     deathYear = -1;
                 }
-                db.addPerson(parsedLine.get(0), parsedLine.get(1), birthYear, deathYear, parsedLine.get(4), parsedLine.get(5));
+                try {
+                    db.addToBatch(parsedLine.get(0), parsedLine.get(1), birthYear, deathYear, parsedLine.get(4), parsedLine.get(5));
+                } catch (SQLException e) {
+                    System.out.println("impossible d'ajouter cette personne");
+                    e.printStackTrace();
+                }
+//                db.addPerson(parsedLine.get(0), parsedLine.get(1), birthYear, deathYear, parsedLine.get(4), parsedLine.get(5));
                 count++;
 //                people.add(new Person(parsedLine.get(0), parsedLine.get(1), birthYear, deathYear, Arrays.asList(parsedLine.get(4).split(",")), Arrays.asList(parsedLine.get(5).split(","))));
-                System.out.println("actor added " + count);
             }
         }
     }
