@@ -55,7 +55,7 @@ public class Database {
         pstmtBatch = null;
         this.batchSize = batchSize;
         try {
-            conn.setAutoCommit(true);
+            conn.setAutoCommit(false);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -83,6 +83,7 @@ public class Database {
     public void doBatch(){
         try {
             int[] result = pstmtBatch.executeBatch();
+            conn.commit();
             System.out.println("Inserted " + result.length + " rows");
         } catch (SQLException e) {
             e.printStackTrace();
