@@ -1,3 +1,5 @@
-datasets
+datasets/
 out/
+.idea/
+database.db-journal
 database.db
