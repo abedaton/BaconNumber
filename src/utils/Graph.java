@@ -36,7 +36,9 @@
 
 package utils;
 
-import java.util.NoSuchElementException;
+import javafx.util.Pair;
+
+import java.util.*;
 
 /**
  *  The {@code Graph} class represents an undirected graph of vertices
@@ -74,6 +76,7 @@ public class Graph {
     private final int V;
     private int E;
     private Bag<Integer>[] adj;
+    private HashMap<UnorderedPair<Integer>, Boolean> tmp = new HashMap<>();
 
     /**
      * Initializes an empty graph with {@code V} vertices and 0 edges.
@@ -139,7 +142,7 @@ public class Graph {
         this.V = G.V();
         this.E = G.E();
         if (V < 0) throw new IllegalArgumentException("Number of vertices must be nonnegative");
-
+        this.tmp = new HashMap<>();
         // update adjacency lists
         adj = (Bag<Integer>[]) new Bag[V];
         for (int v = 0; v < V; v++) {
@@ -192,10 +195,15 @@ public class Graph {
     public void addEdge(int v, int w) {
         validateVertex(v);
         validateVertex(w);
-        E++;
-        adj[v].add(w);
-        adj[w].add(v);
+        UnorderedPair<Integer> newEdge = new UnorderedPair<>(v, w);
+        if (!this.tmp.containsKey(newEdge)) {
+            this.tmp.put(new UnorderedPair<>(v, w), true);
+            adj[v].add(w);
+            adj[w].add(v);
+            E++;
+        }
     }
+
 
 
     /**

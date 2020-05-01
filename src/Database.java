@@ -1,19 +1,27 @@
+
+
+import java.io.File;
 import java.sql.*;
 
 public class Database {
     private String databaseName;
     Connection conn;
     PreparedStatement pstmtBatch;
+    PreparedStatement pstmtBatchFilms;
     int countingBatch;
-    String batchSQL;
+    String batchSQL, batchSQLFilms;
     int batchSize;
 
-    public Database(String filename){
+    public Database(String filename) {
         this.databaseName = filename;
+        try {
+            conn = connect();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void createDatabase() throws SQLException {
-        conn = connect();
         Statement stmt = conn.createStatement();
         String createPersonTable = "CREATE TABLE IF NOT EXISTS People" +
                 "(nconst TEXT NOT NULL, " +
@@ -23,6 +31,11 @@ public class Database {
                 "primaryProfession STRING NOT NULL, " +
                 "films STRING NOT NULL);";
         stmt.executeUpdate(createPersonTable);
+        String createPersonInFilmTable = "CREATE TABLE IF NOT EXISTS PeopleInFilms" +
+                "(tconst TEXT NOT NULL UNIQUE," +
+                "People TEXT DEFAULT '');";
+
+        stmt.executeUpdate(createPersonInFilmTable);
     }
 
     private Connection connect() throws SQLException{
@@ -30,27 +43,23 @@ public class Database {
         return DriverManager.getConnection(url);
     }
 
-    public boolean addPerson(String nconst, String primaryName, int birthYear, int deathYear, String professions, String films) {
-        String sql = "INSERT INTO People(nconst,primaryName,birthYear,deathYear,primaryProfession,films)" + "VALUES(?,?,?,?,?,?);";
-        PreparedStatement pstmt = null;
+    public void addPersonToFilm(String filmID, String person){
+        String sql = "INSERT INTO PeopleInFilms(tconst, People) VALUES(?,?);";
         try {
-            pstmt = prepareUserStatement(nconst, primaryName, birthYear, deathYear, professions, films, sql);
-        }catch (SQLException e){
-            System.out.println("Failed to add User");
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, filmID);
+            stmt.setString(2, person);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        if (pstmt != null){
-            try {
-                return pstmt.executeUpdate() > 0;
-            } catch (SQLException e) {
-                System.out.println("Failed to add User2");
-            }
-        }
-        return false;
     }
 
-    public void beginBatch(int batchSize){
+    public void beginBatch(int batchSize, boolean films){
         // TODO : Add Batch insert rather than inserting one by one
         batchSQL = "INSERT INTO People(nconst,primaryName,birthYear,deathYear,primaryProfession,films)" + " VALUES(?,?,?,?,?,?);";
+        batchSQLFilms = "INSERT INTO PeopleInFilms(tconst, People)" + " VALUES(?,?);";
+        batchSQLFilms = "INSERT INTO PeopleInFilms(tconst, People) VALUES (?,?) ON CONFLICT(tconst) DO UPDATE SET People = People || ',' || ?;";
         countingBatch = 0;
         pstmtBatch = null;
         this.batchSize = batchSize;
@@ -60,13 +69,15 @@ public class Database {
             e.printStackTrace();
         }
         try {
-            pstmtBatch = conn.prepareStatement(batchSQL);
+                pstmtBatch = conn.prepareStatement(batchSQL);
+                pstmtBatchFilms = conn.prepareStatement(batchSQLFilms);
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public void addToBatch(String nconst, String primaryName, int birthYear, int deathYear, String professions, String films) throws SQLException {
+    public void addPersonToBatch(String nconst, String primaryName, int birthYear, int deathYear, String professions, String films) throws SQLException {
 //        pstmtBatch = prepareUserStatement(nconst, primaryName, birthYear, deathYear, professions, films, batchSQL);
         // TODO remove duplicated code
         pstmtBatch.setString(1, nconst);
@@ -77,10 +88,19 @@ public class Database {
         pstmtBatch.setString(6, films);
         pstmtBatch.addBatch();
         countingBatch++;
-
     }
 
-    public void doBatch(){
+    public void addFilmToBatch(String tconst, String actor) throws SQLException {
+//        pstmtBatch = prepareUserStatement(nconst, primaryName, birthYear, deathYear, professions, films, batchSQL);
+        // TODO remove duplicated code
+        pstmtBatchFilms.setString(1, tconst);
+        pstmtBatchFilms.setString(2, actor);
+        pstmtBatchFilms.setString(3, actor);
+        pstmtBatchFilms.addBatch();
+//        countingBatchFilm++;
+    }
+
+    public void doBatchPeople(){
         try {
             int[] result = pstmtBatch.executeBatch();
             conn.commit();
@@ -90,15 +110,19 @@ public class Database {
         }
     }
 
-    private PreparedStatement prepareUserStatement(String nconst, String primaryName, int birthYear, int deathYear, String professions, String films, String sql) throws SQLException{
-        Connection conn = this.connect();
-        PreparedStatement pstmt = conn.prepareStatement(sql);
-        pstmt.setString(1, nconst);
-        pstmt.setString(2, primaryName);
-        pstmt.setInt(3, birthYear);
-        pstmt.setInt(4, deathYear);
-        pstmt.setString(5, professions);
-        pstmt.setString(6, films);
-        return pstmt;
+    public void doBatchPeopleInFilm(){
+        try {
+            int[] result = pstmtBatchFilms.executeBatch();
+            conn.commit();
+            System.out.println("Inserted " + result.length + " rows");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public boolean exists(){
+        File file = new File(databaseName);
+        return file.exists();
     }
 }
