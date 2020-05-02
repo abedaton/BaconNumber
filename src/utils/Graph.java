@@ -38,6 +38,7 @@ package utils;
 
 import javafx.util.Pair;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -70,7 +71,7 @@ import java.util.*;
  *  @author Robert Sedgewick
  *  @author Kevin Wayne
  */
-public class Graph {
+public class Graph implements Serializable {
     private static final String NEWLINE = System.getProperty("line.separator");
 
     private final int V;

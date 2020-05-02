@@ -9,16 +9,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class NewParser {
-    List<Person> people;
-    Database db;
-    int count = 0;
+    private List<Person> people;
+    private Database db;
+    private int count = 0;
+    private int limit;
 
     public NewParser(Database db){
         this.people = new ArrayList<>();
         this.db = db;
     }
 
-    public void parseName_basic(String fileName) {
+    public void parseName_basic(String fileName){
+        parseName_basic(fileName, Integer.MAX_VALUE);
+    }
+
+    public void parseName_basic(String fileName, int limit) {
+        this.limit = limit;
         db.beginBatch(500, false);
         //db.beginBatch(500, true);
         List<String> list;
@@ -35,7 +41,7 @@ public class NewParser {
     }
 
     private void handleLine(String line) {
-        if (count <= 1000000) {
+        if (count <= limit) {
             List<String> parsedLine = Arrays.asList(line.split("\t"));
             List<String> professions = Arrays.asList(parsedLine.get(4).split(","));
             if (professions.contains("actor") || professions.contains("actress")) {

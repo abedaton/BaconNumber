@@ -1,6 +1,7 @@
 
 
 import java.io.File;
+import java.io.Serializable;
 import java.sql.*;
 
 public class Database {
@@ -58,7 +59,6 @@ public class Database {
     public void beginBatch(int batchSize, boolean films){
         // TODO : Add Batch insert rather than inserting one by one
         batchSQL = "INSERT INTO People(nconst,primaryName,birthYear,deathYear,primaryProfession,films)" + " VALUES(?,?,?,?,?,?);";
-        batchSQLFilms = "INSERT INTO PeopleInFilms(tconst, People)" + " VALUES(?,?);";
         batchSQLFilms = "INSERT INTO PeopleInFilms(tconst, People) VALUES (?,?) ON CONFLICT(tconst) DO UPDATE SET People = People || ',' || ?;";
         countingBatch = 0;
         pstmtBatch = null;

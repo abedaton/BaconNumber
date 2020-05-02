@@ -1,10 +1,11 @@
 package utils;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class UnorderedPair<T> {
+public class UnorderedPair<T> implements Serializable {
     private final Set<T> set = new LinkedHashSet<>();
 
     public UnorderedPair(T a, T b){
