@@ -1,100 +1,88 @@
-
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Parser {
+    public ArrayList<Person> people;
+    private HashMap<String, String> translatedFilms;
+    private String language;
 
-    public static ArrayList<Person> parseName_basic(String fileName) {
-        ArrayList<Person> people = new ArrayList<>();
-        Path path = Paths.get(fileName);
 
-        try (Stream<String> lines = Files.lines(path).skip(1)) {
+    private int graphId = 0;
+    private int count = 0;
+    private int limit;
 
-            for (Object tmp : lines.toArray()) {
-                String line = tmp.toString();
-                ArrayList<String> parsedLine = new ArrayList<>(Arrays.asList(line.split("\t")));
+    public Parser(){
+        this.people = new ArrayList<>();
+    }
 
-                ArrayList<String> professions = new ArrayList<>(Arrays.asList(parsedLine.get(4).split(",")));
-                if (professions.contains("actor") || professions.contains("actress")) {
-                    ArrayList<String> films = new ArrayList<>(Arrays.asList(parsedLine.get(5).split(",")));
-                    if (!films.contains("\\N")) {
-                        String id = parsedLine.get(0);
-                        String name = parsedLine.get(1);
-                        int birthYear;
-                        try {
-                            birthYear = Integer.parseInt(parsedLine.get(2));
-                        } catch (NumberFormatException notUsed) {
-                            birthYear = -1;
-                        }
-                        int deathYear;
-                        try {
-                            deathYear = Integer.parseInt(parsedLine.get(3));
-                        } catch (NumberFormatException notUsed) {
-                            deathYear = -1;
-                        }
-                        Person person = new Person(id, name, birthYear, deathYear, professions, films);
-                        people.add(person);
-                    }
-                }
 
-            }
+    public ArrayList<Person> parseName_basic(String fileName){
+        return parseName_basic(fileName, Integer.MAX_VALUE);
+    }
 
-        } catch (IOException e) {
-            e.printStackTrace();
+    public ArrayList<Person> parseName_basic(String fileName, int limit) {
+        this.limit = limit;
+        if (count == Integer.MAX_VALUE){
+            System.out.println("Starting parsing names...");
+        } else {
+            System.out.println("Parsing " + limit + " names...");
         }
 
+        try (Stream<String> stream = Files.lines(Paths.get(fileName)).skip(1)) {
+            stream.collect(Collectors.toList()).forEach(this::handleLine);
+        } catch (IOException e) {
+            System.out.println("Can't read file " + fileName + ". The program will now exit");
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        System.out.println("Parsing names is now finished");
         return people;
     }
 
-    public static void writeNewNameBacis(ArrayList<Person> people, String newFileTmp){
-        File newFile = new File(newFileTmp);
-        try {
-            if (newFile.createNewFile()) {
-                System.out.println("File created");
-            } else {
-                System.out.println("File already exists, reusing old one");
-                newFile.delete();
-                newFile.createNewFile();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            FileWriter writer = new FileWriter(newFile);
-            try {
-                writer.write("nconst\tprimaryName\tbirthYear\tdeathYear\tprimaryProfession\tknownForTitles\n");
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-            people.forEach(person -> {
-                try {
-                    writer.write(person.getId() + "\t" + person.getName() + "\t" + person.getBirthYear() + "\t" +
-                            person.getDeathYear() + "\t" + person.getProfession().toString().replace("[", "").replace("]", "").replace(" ", "") + "\t" + person.getFilms().toString().replace("[", "").replace("]", "").replace(" ", "")  + "\n");
-                } catch (IOException e) {
-                    e.printStackTrace();
+    private void handleLine(String line) {
+        if (count < limit) {
+            List<String> parsedLine = Arrays.asList(line.split("\t"));
+            List<String> professions = Arrays.asList(parsedLine.get(4).split(","));
+            if (professions.contains("actor") || professions.contains("actress")) {
+                if (!parsedLine.get(5).contains("\\N")) {
+                    List<String> films = Arrays.asList(parsedLine.get(5).split(","));
+
+                    people.add(new Person(parsedLine.get(1), graphId, films));
+                    count++;
+                    graphId++;
                 }
-            });
-            writer.close();
-        } catch (IOException e){
-            e.printStackTrace();
+            }
         }
     }
 
-    public static void writeObjectToFile(Object serObj) {
-        try {
-            FileOutputStream fileOut = new FileOutputStream("theList");
-            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-            objectOut.writeObject(serObj);
-            objectOut.close();
-            System.out.println("The Object  was succesfully written to a file");
+    public HashMap<String, String> parseTitleAkas(String filename, String language){
+        System.out.println("Finding film names in " + language + "...");
+        this.language = language;
+        this.translatedFilms = new HashMap<>();
+        try (Stream<String> stream = Files.lines(Paths.get(filename)).skip(1)) {
+            stream.collect(Collectors.toList()).forEach(this::handleAkasLine);
+        } catch (IOException e) {
+            System.out.println("Can't read file " + filename + ". The program will now exit");
+            e.printStackTrace();
+            System.exit(1);
+        }
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        System.out.println("All films have been translated to " + language);
+        return translatedFilms;
+    }
+
+    private void handleAkasLine(String line) {
+        List<String> parsedLine = Arrays.asList(line.split("\t"));
+        if ((parsedLine.get(3).equalsIgnoreCase(language) || parsedLine.get(4).equalsIgnoreCase(language)) && !translatedFilms.containsKey(parsedLine.get(0))) {
+            translatedFilms.put(parsedLine.get(0), parsedLine.get(2));
         }
     }
 }

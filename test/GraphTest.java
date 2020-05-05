@@ -1,7 +1,9 @@
-import org.junit.Test;
-import utils.Graph;
+import edu.princeton.cs.algs4.Graph;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class GraphTest {
 
